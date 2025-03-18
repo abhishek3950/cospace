@@ -1,3 +1,8 @@
+export interface Position {
+  x: number;
+  y: number;
+}
+
 export interface Organization {
   id: string;
   name: string;
@@ -15,43 +20,49 @@ export interface Organization {
   };
 }
 
+export type UserStatus = 'online' | 'away' | 'busy' | 'offline';
+
 export interface User {
   id: string;
   name: string;
   email: string;
-  avatar: string;
   organizationId: string;
-  role: 'admin' | 'member';
-  position: [number, number, number];
-  rotation: [number, number, number];
+  position: Position;
+  status: UserStatus;
+  isInOffice: boolean;
+  isDND: boolean;
+  calendarConnected: boolean;
+  currentSpace: string | null;
+  currentMeeting: {
+    id: string;
+    title: string;
+    endTime: string;
+  } | null;
 }
+
+export type MessageType = 'text' | 'image' | 'file';
 
 export interface ChatMessage {
   id: string;
-  userId: string;
-  message: string;
-  timestamp: number;
-  organizationId: string;
+  senderId: string;
+  receiverId: string | null;
+  content: string;
+  timestamp: string;
+  type: 'text' | 'image' | 'file';
+  isPrivate: boolean;
 }
 
-export interface Room {
+export type SpaceType = 'desk' | 'meeting_room' | 'common_area';
+
+export interface Space {
   id: string;
   name: string;
-  type: 'meeting' | 'common' | 'private';
-  position: [number, number, number];
-  rotation: [number, number, number];
-  isLocked: boolean;
-  participants: string[];
-  organizationId: string;
-}
-
-export interface Desk {
-  id: string;
-  userId: string | null;
-  position: [number, number, number];
-  rotation: [number, number, number];
-  isOccupied: boolean;
-  organizationId: string;
+  type: SpaceType;
+  position: Position;
+  width: number;
+  height: number;
+  capacity: number;
+  occupants: string[];
 }
 
 export interface LoginCredentials {
@@ -64,4 +75,31 @@ export interface AuthResponse {
   user: User;
   organization: Organization;
   token: string;
+}
+
+export interface ChatThread {
+  id: string;
+  participants: string[];
+  messages: ChatMessage[];
+  lastActivity: string;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  type: 'message' | 'mention' | 'meeting' | 'system';
+  content: string;
+  timestamp: string;
+  read: boolean;
+  actionUrl?: string;
+}
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  startTime: string;
+  endTime: string;
+  attendees: string[];
+  meetingLink?: string;
+  organizationId: string;
 } 

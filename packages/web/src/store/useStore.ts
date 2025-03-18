@@ -1,74 +1,109 @@
 import { create } from 'zustand';
-
-interface User {
-  id: string;
-  name: string;
-  avatar: string;
-  position: [number, number, number];
-  rotation: [number, number, number];
-}
+import { User, Space, Position } from '@cospace/shared';
 
 interface AppState {
-  // UI State
-  hoveredDesk: boolean;
-  setHoveredDesk: (hovered: boolean) => void;
-
-  // User State
   currentUser: User | null;
-  setCurrentUser: (user: User | null) => void;
-
-  // Room State
+  users: User[];
+  spaces: Space[];
   currentRoom: string | null;
-  setCurrentRoom: (room: string | null) => void;
-
-  // Chat State
-  isChatOpen: boolean;
-  setChatOpen: (open: boolean) => void;
-  chatMessages: Array<{
-    id: string;
-    userId: string;
-    message: string;
-    timestamp: number;
-  }>;
-  addChatMessage: (message: {
-    id: string;
-    userId: string;
-    message: string;
-    timestamp: number;
-  }) => void;
-
-  // Audio/Video State
-  isAudioEnabled: boolean;
-  setAudioEnabled: (enabled: boolean) => void;
-  isVideoEnabled: boolean;
-  setVideoEnabled: (enabled: boolean) => void;
+  setCurrentUser: (user: User | null) => void;
+  setUsers: (users: User[]) => void;
+  setUserPosition: (userId: string, position: Position) => void;
+  setIsInOffice: (userId: string | undefined, isInOffice: boolean) => void;
+  setIsDND: (userId: string | undefined, isDND: boolean) => void;
+  setCurrentSpace: (userId: string | undefined, spaceId: string | null) => void;
+  setCalendarConnected: (connected: boolean) => void;
+  setCurrentMeeting: (meeting: { id: string; title: string; endTime: string } | null) => void;
+  setCurrentRoom: (roomId: string | null) => void;
+  addSpace: (space: Space) => void;
 }
 
+const updateUser = (user: User, updates: Partial<User>): User => ({
+  ...user,
+  ...updates,
+});
+
 export const useStore = create<AppState>((set) => ({
-  // UI State
-  hoveredDesk: false,
-  setHoveredDesk: (hovered) => set({ hoveredDesk: hovered }),
-
-  // User State
   currentUser: null,
-  setCurrentUser: (user) => set({ currentUser: user }),
-
-  // Room State
+  users: [],
+  spaces: [],
   currentRoom: null,
-  setCurrentRoom: (room) => set({ currentRoom: room }),
-
-  // Chat State
-  isChatOpen: false,
-  setChatOpen: (open) => set({ isChatOpen: open }),
-  chatMessages: [],
-  addChatMessage: (message) =>
-    set((state) => ({
-      chatMessages: [...state.chatMessages, message],
-    })),
-
-  // Audio/Video State
-  isAudioEnabled: false,
-  setAudioEnabled: (enabled) => set({ isAudioEnabled: enabled }),
-  isVideoEnabled: false,
-  setVideoEnabled: (enabled) => set({ isVideoEnabled: enabled }),
+  setCurrentUser: (user) => set({ currentUser: user }),
+  setUsers: (users) => set({ users }),
+  setCurrentRoom: (roomId) => set({ currentRoom: roomId }),
+  addSpace: (space) => set((state) => ({ spaces: [...state.spaces, space] })),
+  setUserPosition: (userId, position) =>
+    set((state) => {
+      if (!userId) return state;
+      return {
+        users: state.users.map((user) =>
+          user.id === userId ? updateUser(user, { position }) : user
+        ),
+        currentUser:
+          state.currentUser?.id === userId
+            ? updateUser(state.currentUser, { position })
+            : state.currentUser,
+      };
+    }),
+  setIsInOffice: (userId, isInOffice) =>
+    set((state) => {
+      if (!userId) return state;
+      return {
+        users: state.users.map((user) =>
+          user.id === userId ? updateUser(user, { isInOffice }) : user
+        ),
+        currentUser:
+          state.currentUser?.id === userId
+            ? updateUser(state.currentUser, { isInOffice })
+            : state.currentUser,
+      };
+    }),
+  setIsDND: (userId, isDND) =>
+    set((state) => {
+      if (!userId) return state;
+      return {
+        users: state.users.map((user) =>
+          user.id === userId ? updateUser(user, { isDND }) : user
+        ),
+        currentUser:
+          state.currentUser?.id === userId
+            ? updateUser(state.currentUser, { isDND })
+            : state.currentUser,
+      };
+    }),
+  setCurrentSpace: (userId, spaceId) =>
+    set((state) => {
+      if (!userId) return state;
+      return {
+        users: state.users.map((user) =>
+          user.id === userId ? updateUser(user, { currentSpace: spaceId }) : user
+        ),
+        currentUser:
+          state.currentUser?.id === userId
+            ? updateUser(state.currentUser, { currentSpace: spaceId })
+            : state.currentUser,
+      };
+    }),
+  setCalendarConnected: (connected) =>
+    set((state) => {
+      if (!state.currentUser) return state;
+      const updatedUser = updateUser(state.currentUser, { calendarConnected: connected });
+      return {
+        currentUser: updatedUser,
+        users: state.users.map((user) =>
+          user.id === updatedUser.id ? updatedUser : user
+        ),
+      };
+    }),
+  setCurrentMeeting: (meeting) =>
+    set((state) => {
+      if (!state.currentUser) return state;
+      const updatedUser = updateUser(state.currentUser, { currentMeeting: meeting });
+      return {
+        currentUser: updatedUser,
+        users: state.users.map((user) =>
+          user.id === updatedUser.id ? updatedUser : user
+        ),
+      };
+    }),
 })); 
