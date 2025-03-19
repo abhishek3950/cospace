@@ -1,109 +1,119 @@
 import { create } from 'zustand';
-import { User, Space, Position } from '@cospace/shared';
+import type { User, Space, ChatThread, ChatMessage, WorkspaceObject } from '@cospace/shared';
 
-interface AppState {
-  currentUser: User | null;
-  users: User[];
-  spaces: Space[];
-  currentRoom: string | null;
+// Define the global store interface that manages application state
+interface Store {
+  // User-related state
+  currentUser: User | null;  // Currently logged-in user
+  users: User[];            // All users in the workspace
+  spaces: Space[];          // All available spaces (desks, rooms, etc.)
+  workspaceObjects: WorkspaceObject[];  // Decorative objects in the workspace
+
+  // Chat-related state
+  chatState: {
+    threads: ChatThread[];                    // All chat threads
+    messages: Record<string, ChatMessage[]>;  // Messages organized by thread ID
+    activeThreadId: string | null;            // Currently selected chat thread
+  };
+
+  // User actions and state updates
   setCurrentUser: (user: User | null) => void;
-  setUsers: (users: User[]) => void;
-  setUserPosition: (userId: string, position: Position) => void;
-  setIsInOffice: (userId: string | undefined, isInOffice: boolean) => void;
-  setIsDND: (userId: string | undefined, isDND: boolean) => void;
-  setCurrentSpace: (userId: string | undefined, spaceId: string | null) => void;
+  setUserPosition: (userId: string, position: { x: number; y: number }) => void;
+  setCurrentSpace: (userId: string, spaceId: string | null) => void;
+  setCurrentRoom: (roomId: string | null) => void;
+
+  // Workspace object management
+  addWorkspaceObject: (object: Omit<WorkspaceObject, 'id'>) => void;
+  updateWorkspaceObject: (id: string, updates: Partial<WorkspaceObject>) => void;
+  deleteWorkspaceObject: (id: string) => void;
+
+  // Chat management
+  setActiveThread: (threadId: string | null) => void;
+
+  // Calendar integration
   setCalendarConnected: (connected: boolean) => void;
   setCurrentMeeting: (meeting: { id: string; title: string; endTime: string } | null) => void;
-  setCurrentRoom: (roomId: string | null) => void;
-  addSpace: (space: Space) => void;
 }
 
-const updateUser = (user: User, updates: Partial<User>): User => ({
-  ...user,
-  ...updates,
-});
-
-export const useStore = create<AppState>((set) => ({
+// Create the global store using Zustand
+export const useStore = create<Store>((set) => ({
+  // Initial state
   currentUser: null,
   users: [],
   spaces: [],
-  currentRoom: null,
+  workspaceObjects: [],
+  chatState: {
+    threads: [],
+    messages: {},
+    activeThreadId: null,
+  },
+
+  // User management actions
   setCurrentUser: (user) => set({ currentUser: user }),
-  setUsers: (users) => set({ users }),
-  setCurrentRoom: (roomId) => set({ currentRoom: roomId }),
-  addSpace: (space) => set((state) => ({ spaces: [...state.spaces, space] })),
+
+  // Update a user's position in the workspace
   setUserPosition: (userId, position) =>
-    set((state) => {
-      if (!userId) return state;
-      return {
-        users: state.users.map((user) =>
-          user.id === userId ? updateUser(user, { position }) : user
-        ),
-        currentUser:
-          state.currentUser?.id === userId
-            ? updateUser(state.currentUser, { position })
-            : state.currentUser,
-      };
-    }),
-  setIsInOffice: (userId, isInOffice) =>
-    set((state) => {
-      if (!userId) return state;
-      return {
-        users: state.users.map((user) =>
-          user.id === userId ? updateUser(user, { isInOffice }) : user
-        ),
-        currentUser:
-          state.currentUser?.id === userId
-            ? updateUser(state.currentUser, { isInOffice })
-            : state.currentUser,
-      };
-    }),
-  setIsDND: (userId, isDND) =>
-    set((state) => {
-      if (!userId) return state;
-      return {
-        users: state.users.map((user) =>
-          user.id === userId ? updateUser(user, { isDND }) : user
-        ),
-        currentUser:
-          state.currentUser?.id === userId
-            ? updateUser(state.currentUser, { isDND })
-            : state.currentUser,
-      };
-    }),
+    set((state) => ({
+      users: state.users.map((user) =>
+        user.id === userId ? { ...user, position } : user
+      ),
+    })),
+
+  // Update a user's current space (desk, room, etc.)
   setCurrentSpace: (userId, spaceId) =>
-    set((state) => {
-      if (!userId) return state;
-      return {
-        users: state.users.map((user) =>
-          user.id === userId ? updateUser(user, { currentSpace: spaceId }) : user
-        ),
-        currentUser:
-          state.currentUser?.id === userId
-            ? updateUser(state.currentUser, { currentSpace: spaceId })
-            : state.currentUser,
-      };
-    }),
+    set((state) => ({
+      users: state.users.map((user) =>
+        user.id === userId ? { ...user, currentSpace: spaceId } : user
+      ),
+    })),
+
+  // Update the current user's room
+  setCurrentRoom: (roomId) =>
+    set((state) => ({
+      currentUser: state.currentUser
+        ? { ...state.currentUser, currentRoom: roomId }
+        : null,
+    })),
+
+  // Workspace object management actions
+  addWorkspaceObject: (object) =>
+    set((state) => ({
+      workspaceObjects: [
+        ...state.workspaceObjects,
+        { ...object, id: Math.random().toString(36).substr(2, 9) },
+      ],
+    })),
+
+  updateWorkspaceObject: (id, updates) =>
+    set((state) => ({
+      workspaceObjects: state.workspaceObjects.map((obj) =>
+        obj.id === id ? { ...obj, ...updates } : obj
+      ),
+    })),
+
+  deleteWorkspaceObject: (id) =>
+    set((state) => ({
+      workspaceObjects: state.workspaceObjects.filter((obj) => obj.id !== id),
+    })),
+
+  // Chat management actions
+  setActiveThread: (threadId) =>
+    set((state) => ({
+      chatState: { ...state.chatState, activeThreadId: threadId },
+    })),
+
+  // Calendar integration actions
   setCalendarConnected: (connected) =>
-    set((state) => {
-      if (!state.currentUser) return state;
-      const updatedUser = updateUser(state.currentUser, { calendarConnected: connected });
-      return {
-        currentUser: updatedUser,
-        users: state.users.map((user) =>
-          user.id === updatedUser.id ? updatedUser : user
-        ),
-      };
-    }),
+    set((state) => ({
+      currentUser: state.currentUser
+        ? { ...state.currentUser, calendarConnected: connected }
+        : null,
+    })),
+
   setCurrentMeeting: (meeting) =>
-    set((state) => {
-      if (!state.currentUser) return state;
-      const updatedUser = updateUser(state.currentUser, { currentMeeting: meeting });
-      return {
-        currentUser: updatedUser,
-        users: state.users.map((user) =>
-          user.id === updatedUser.id ? updatedUser : user
-        ),
-      };
-    }),
+    set((state) => ({
+      currentUser: state.currentUser
+        ? { ...state.currentUser, currentMeeting: meeting }
+        : null,
+    })),
 })); 
