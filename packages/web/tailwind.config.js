@@ -20,6 +20,15 @@ export default {
           900: '#0c4a6e',
         },
       },
+      keyframes: {
+        'bounce-subtle': {
+          '0%, 100%': { transform: 'translate(-50%, -50%)' },
+          '50%': { transform: 'translate(-50%, -52%)' },
+        }
+      },
+      animation: {
+        'bounce-subtle': 'bounce-subtle 0.5s ease-in-out 2',
+      }
     },
   },
   plugins: [],

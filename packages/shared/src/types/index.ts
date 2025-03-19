@@ -40,7 +40,7 @@ export interface User {
   } | null;
 }
 
-export type MessageType = 'text' | 'image' | 'file';
+export type MessageType = 'text' | 'image' | 'file' | 'gif';
 
 export interface ChatMessage {
   id: string;
@@ -48,7 +48,7 @@ export interface ChatMessage {
   receiverId: string | null;
   content: string;
   timestamp: string;
-  type: 'text' | 'image' | 'file';
+  type: MessageType;
   isPrivate: boolean;
 }
 

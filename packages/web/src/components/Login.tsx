@@ -1,8 +1,12 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useStore } from '../store/useStore';
-import type { LoginCredentials, AuthResponse } from '@cospace/shared';
+import type { LoginCredentials, AuthResponse, User } from '@cospace/shared';
 
-export const Login = () => {
+interface LoginProps {
+  onLogin: (user: User) => void;
+}
+
+export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [formData, setFormData] = useState<LoginCredentials>({
     email: '',
     password: '',
@@ -47,6 +51,8 @@ export const Login = () => {
           isDND: false,
           calendarConnected: false,
           currentMeeting: null,
+          isAudioEnabled: false,
+          isVideoEnabled: false,
         },
         organization: {
           id: '1',
@@ -70,6 +76,7 @@ export const Login = () => {
       setCurrentUser(response.user);
       localStorage.setItem('token', response.token);
       localStorage.setItem('organizationSlug', response.organization.slug);
+      onLogin(response.user);
     } catch (err) {
       setError('Invalid credentials');
     }

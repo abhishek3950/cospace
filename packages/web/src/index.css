@@ -2,6 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes walk-left {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes walk-right {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(2px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes walk-up {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes walk-down {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(2px); }
+  100% { transform: translateY(0); }
+}
+
+.animate-walk-left {
+  animation: walk-left 0.5s infinite;
+}
+
+.animate-walk-right {
+  animation: walk-right 0.5s infinite;
+}
+
+.animate-walk-up {
+  animation: walk-up 0.5s infinite;
+}
+
+.animate-walk-down {
+  animation: walk-down 0.5s infinite;
+}
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
